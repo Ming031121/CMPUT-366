@@ -1,0 +1,107 @@
+## version 0.1
+class FirstAvailable(VarSelector):
+    """
+    Naïve method for selecting variables; simply returns the first variable encountered whose domain is larger than one.
+    """
+    def select_variable(self, grid):
+        for i in range(g.get_width()):
+            for j in range(g.get_width()):
+                if len(g.get_cells()[i][j]) > 1:
+                    return i, j
+
+class MRV(VarSelector):
+    """
+    Implements the MRV heuristic, which returns one of the variables with smallest domain.
+    """
+    def select_variable(self, grid):
+        # Implement here the mrv heuristic
+        min_len = g.get_width() + 1
+        min_index = (g.get_width()+1, g.get_width()+1)
+        for i in range(g.get_width()):
+            for j in range(g.get_width()):
+                if len(g.get_cells()[i][j]) < min_len:
+                    min_len = len(g.get_cells()[i][j])
+                    min_index = (i, j)
+        return min_index
+
+class Backtracking:
+    """
+    Class that implements backtracking search for solving CSPs.
+    """
+
+    def search(self, grid, var_selector):
+        """
+        Implements backtracking search with inference.
+        """
+        if grid.is_solved():
+            return grid
+        var = var_selector
+        print(var)
+        for d in grid.get_cells()[var[0]][var[1]]:
+            if grid.is_value_consistent(d, var[0], var[1]):
+                copy_g = grid.copy()
+                copy_g.get_cells()[var[0]][var[1]] = d
+                copy_g.print()
+                rb = self.search(copy_g, MRV().select_variable(copy_g))
+                if rb:
+                    return rb
+        return False
+
+## version 0.2
+
+## correct version for test case, changed the variable selection method
+
+class FirstAvailable(VarSelector):
+    """
+    Naïve method for selecting variables; simply returns the first variable encountered whose domain is larger than one.
+    """
+    def select_variable(self, grid):
+        for i in range(grid.get_width()):
+            for j in range(grid.get_width()):
+                if len(grid.get_cells()[i][j]) > 1:
+                    return i, j
+
+
+
+class MRV(VarSelector):
+    """
+    Implements the MRV heuristic, which returns one of the variables with smallest domain.
+    """
+    def select_variable(self, grid):
+        # Implement here the mrv heuristic
+        min_len = grid.get_width() + 1
+        min_index = (grid.get_width()+1, grid.get_width()+1)
+        for i in range(grid.get_width()):
+            for j in range(grid.get_width()):
+                if min_len > len(grid.get_cells()[i][j]) > 1:
+                    min_len = len(grid.get_cells()[i][j])
+                    min_index = (i, j)
+
+        return min_index
+
+class Backtracking:
+    """
+    Class that implements backtracking search for solving CSPs.
+    """
+
+    def search(self, grid, var_selector):
+        """
+        Implements backtracking search with inference.
+        """
+        if grid.is_solved():
+            return grid
+        var = var_selector
+        print(var)
+        for d in grid.get_cells()[var[0]][var[1]]:
+            if grid.is_value_consistent(d, var[0], var[1]):
+                copy_g = grid.copy()
+                copy_g.get_cells()[var[0]][var[1]] = d
+                copy_g.print()
+                rb = self.search(copy_g, MRV().select_variable(copy_g))
+                if rb:
+                    return rb
+        return False
+
+## version 0.3
+
+## add arc consistent
