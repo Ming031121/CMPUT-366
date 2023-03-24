@@ -173,6 +173,12 @@ class Grid:
                     return False
         return True
 
+        # for i in range(self._width):
+        #     for j in range(self._width):
+        #         if len(self._cells[i][j]) > 1 or not self.is_value_consistent(self._cells[i][j], i, j):
+        #             return False
+        # return True
+
     def is_value_consistent(self, value, row, column):
         for i in range(self.get_width()):
             if i == column: continue
@@ -216,8 +222,8 @@ class FirstAvailable(VarSelector):
         for i in range(grid.get_width()):
             for j in range(grid.get_width()):
                 if len(grid.get_cells()[i][j]) > 1:
-                    return i, j
-
+                    return (i,j)
+        return None
 
 class MRV(VarSelector):
     """
@@ -362,20 +368,20 @@ class AC3:
 
             variables_assigned, failure = self.remove_domain_column(grid, var[0], var[1])
             if failure:
-                return failure
+                return True
             queue.extend(variables_assigned)
 
             variables_assigned, failure = self.remove_domain_unit(grid, var[0], var[1])
             if failure:
-                return failure
+                return True
             queue.extend(variables_assigned)
 
             variables_assigned, failure = self.remove_domain_row(grid, var[0], var[1])
             if failure:
-                return failure
+                return True
             queue.extend(variables_assigned)
 
-        return True
+        return False
 
 
 class Backtracking:
@@ -388,29 +394,36 @@ class Backtracking:
         Implements backtracking search with inference.
         """
         if grid.is_solved():
+            print("Puzzle Solved")
             return grid
+
         if var_selector == "MRV":
             var = MRV().select_variable(grid)
         else:
             var = FirstAvailable().select_variable(grid)
-        # print(var)
+        # if var == None:
+        #     return False
+        # print("This is the grid:")
+        # grid.print()
         for d in grid.get_cells()[var[0]][var[1]]:
             if grid.is_value_consistent(d, var[0], var[1]):
                 copy_g = grid.copy()
                 copy_g.get_cells()[var[0]][var[1]] = d
+
                 # copy_g.print()
+                # copy_g.print_domains()
                 ri = AC3().consistency(copy_g, var)
-                if ri:
-                    rb = self.search(copy_g, "MRV")
+                if not ri:
+                    if var_selector == "MRV":
+                        rb = self.search(copy_g, "MRV")
+                    else:
+                        rb = self.search(copy_g, "FA")
                     if rb:
                         return rb
         return False
 
-
-#
-
-file = open('test.txt', 'r')
-# file = open('top95.txt', 'r')
+#file = open('tutorial_problem.txt', 'r')
+file = open('top95.txt', 'r')
 problems = file.readlines()
 fa_list = []
 mrv_list = []
@@ -429,25 +442,31 @@ for p in problems:
     g.print_domains()
     print()
 
-    #
-    # t_start = time.perf_counter()
-    # g.print_domains()
-    # Backtracking().search(g, "FA")
-    # t_stop = time.perf_counter()
-    # rt_fa = t_stop - t_start
-    # fa_list.append(rt_fa)
-    # print("fa done in %f second" % rt_fa)
+
+    t_start = time.perf_counter()
+    g.print_domains()
+    AC3().pre_process_consistency(g)
+    print('Domains of Variables')
+    g.print_domains()
+    print()
+    fa_grid = Backtracking().search(g, "FA")
+    # fa_grid.print()
+    t_stop = time.perf_counter()
+    rt_fa = t_stop - t_start
+    fa_list.append(rt_fa)
+    print("fa done in %f second" % rt_fa)
 
     # Backtracking test with First available method variable selection with forward checking
     t_start = time.perf_counter()
-    AC3().pre_process_consistency(g)
-    Backtracking().search(g, "MRV")
+    # AC3().pre_process_consistency(g)
+    mrv_grid = Backtracking().search(g, "MRV")
+    # mrv_grid.print()
     t_stop = time.perf_counter()
     rt_mrv = t_stop - t_start
     mrv_list.append(rt_mrv)
     print("mrv done in %f second" % rt_mrv)
 print(mrv_list)
 print(fa_list)
-# plotter = PlotResults()
-# plotter.plot_results(mrv_list, fa_list, "Running Time Backtracking (MRV)", "Running Time Backtracking (FA)",
-#                      "running_time")
+plotter = PlotResults()
+plotter.plot_results(mrv_list, fa_list, "Running Time Backtracking (MRV)", "Running Time Backtracking (FA)",
+                     "running_time")
